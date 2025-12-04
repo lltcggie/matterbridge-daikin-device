@@ -7,15 +7,18 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
-          node-version: '22.x'
+          node-version: '24.x'
           registry-url: 'https://registry.npmjs.org'
 
       - name: Clean cache
@@ -58,18 +61,4 @@ jobs:
         run: npm run build
 
       - name: Publish the plugin to npm
-        run: npm publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-      - name: Trigger Matterbridge Docker Build Main
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.PAT_TOKEN }}
-          script: |
-            await github.rest.actions.createWorkflowDispatch({
-              owner: 'Luligu',
-              repo: 'matterbridge',
-              workflow_id: 'docker-buildx-main.yml',
-              ref: 'main'
-            })
+        run: npm publish --provenance --access public

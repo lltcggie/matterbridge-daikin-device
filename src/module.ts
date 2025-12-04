@@ -1,13 +1,5 @@
 /**
- * This file contains the plugin template.
- *
- * @file module.ts
- * @author Luca Liguori
- * @created 2025-06-15
- * @version 1.3.0
- * @license Apache-2.0
- *
- * Copyright 2025, 2026, 2027 Luca Liguori.
+ * Copyright 2025 lltcggie
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +14,7 @@
  * limitations under the License.
  */
 
-import { MatterbridgeDynamicPlatform, MatterbridgeEndpoint, onOffOutlet, PlatformConfig, PlatformMatterbridge } from 'matterbridge';
+import { MatterbridgeDynamicPlatform, PlatformConfig, PlatformMatterbridge } from 'matterbridge';
 import { AnsiLogger, LogLevel } from 'matterbridge/logger';
 
 /**
@@ -32,18 +24,25 @@ import { AnsiLogger, LogLevel } from 'matterbridge/logger';
  * @param {PlatformMatterbridge} matterbridge - An instance of MatterBridge.
  * @param {AnsiLogger} log - An instance of AnsiLogger. This is used for logging messages in a format that can be displayed with ANSI color codes and in the frontend.
  * @param {PlatformConfig} config - The platform configuration.
- * @returns {TemplatePlatform} - An instance of the MatterbridgeAccessory or MatterbridgeDynamicPlatform class. This is the main interface for interacting with the Matterbridge system.
+ * @returns {DaikinPlatform} - An instance of the MatterbridgeAccessory or MatterbridgeDynamicPlatform class. This is the main interface for interacting with the Matterbridge system.
  */
-export default function initializePlugin(matterbridge: PlatformMatterbridge, log: AnsiLogger, config: PlatformConfig): TemplatePlatform {
-  return new TemplatePlatform(matterbridge, log, config);
+export default function initializePlugin(matterbridge: PlatformMatterbridge, log: AnsiLogger, config: PlatformConfig): DaikinPlatform {
+  return new DaikinPlatform(matterbridge, log, config);
 }
 
-// Here we define the TemplatePlatform class, which extends the MatterbridgeDynamicPlatform.
-// If you want to create an Accessory platform plugin, you should extend the MatterbridgeAccessoryPlatform class instead.
-export class TemplatePlatform extends MatterbridgeDynamicPlatform {
+import { DaikinMatterDevice } from './DaikinMatterDevice.js';
+import daikinMatterFactory from './DaikinMatterFactory.js';
+
+export class DaikinPlatform extends MatterbridgeDynamicPlatform {
+  public daikinIPs: string[] = [];
+  private devices: DaikinMatterDevice[] = [];
+  private isConfigValid = false;
+
   constructor(matterbridge: PlatformMatterbridge, log: AnsiLogger, config: PlatformConfig) {
     // Always call super(matterbridge, log, config)
     super(matterbridge, log, config);
+
+    if (config.daikinIPs) this.daikinIPs = config.daikinIPs as string[];
 
     // Verify that Matterbridge is the correct version
     if (this.verifyMatterbridgeVersion === undefined || typeof this.verifyMatterbridgeVersion !== 'function' || !this.verifyMatterbridgeVersion('3.3.0')) {
@@ -53,69 +52,73 @@ export class TemplatePlatform extends MatterbridgeDynamicPlatform {
     }
 
     this.log.info(`Initializing Platform...`);
-    // You can initialize your platform here, like setting up initial state or loading configurations.
+
+    this.isConfigValid = true;
   }
 
   override async onStart(reason?: string) {
     this.log.info(`onStart called with reason: ${reason ?? 'none'}`);
 
-    // Wait for the platform to fully load the select if you use them.
+    if (!this.isConfigValid) {
+      throw new Error('Plugin not configured yet, configure first, then restart.');
+    }
+
     await this.ready;
-
-    // Clean the selectDevice and selectEntity maps, if you want to reset the select. This is useful when you have an API that sends all the devices and you want to rediscover all of them.
     await this.clearSelect();
-
-    // Implements your own logic there
     await this.discoverDevices();
   }
 
   override async onConfigure() {
-    // Always call super.onConfigure()
     await super.onConfigure();
 
     this.log.info('onConfigure called');
 
-    // Configure all your devices. The persisted attributes need to be updated.
-    for (const device of this.getDevices()) {
-      this.log.info(`Configuring device: ${device.uniqueId}`);
-      // You can update the device configuration here, for example:
-      // device.updateConfiguration({ key: 'value' });
+    for (const device of this.devices) {
+      await device.restoreState();
     }
   }
 
   override async onChangeLoggerLevel(logLevel: LogLevel) {
     this.log.info(`onChangeLoggerLevel called with: ${logLevel}`);
-    // Change here the logger level of the api you use or of your devices
   }
 
   override async onShutdown(reason?: string) {
-    // Always call super.onShutdown(reason)
     await super.onShutdown(reason);
 
     this.log.info(`onShutdown called with reason: ${reason ?? 'none'}`);
+
+    for (const device of this.devices) {
+      await device.destroy();
+    }
+
     if (this.config.unregisterOnShutdown === true) await this.unregisterAllDevices();
   }
 
   private async discoverDevices() {
     this.log.info('Discovering devices...');
-    // Implement device discovery logic here.
-    // For example, you might fetch devices from an API.
-    // and register them with the Matterbridge instance.
 
-    // Example: Create and register an outlet device
-    // If you want to create an Accessory platform plugin and your platform extends MatterbridgeAccessoryPlatform,
-    // instead of createDefaultBridgedDeviceBasicInformationClusterServer, call createDefaultBasicInformationClusterServer().
-    const outlet = new MatterbridgeEndpoint(onOffOutlet, { id: 'outlet1' })
-      .createDefaultBridgedDeviceBasicInformationClusterServer('Outlet', 'SN123456', this.matterbridge.aggregatorVendorId, 'Matterbridge', 'Matterbridge Outlet', 10000, '1.0.0')
-      .createDefaultPowerSourceWiredClusterServer()
-      .addRequiredClusterServers()
-      .addCommandHandler('on', (data) => {
-        this.log.info(`Command on called on cluster ${data.cluster}`);
-      })
-      .addCommandHandler('off', (data) => {
-        this.log.info(`Command off called on cluster ${data.cluster}`);
-      });
+    for (const daikinIP of this.daikinIPs) {
+      try {
+        const parts = daikinIP.split(',');
 
-    await this.registerDevice(outlet);
+        const ip = parts[0];
+
+        this.log.info(`Creating Daikin AC device at IP: ${ip}`);
+        const device = await daikinMatterFactory(ip, this.log);
+        if (device === undefined) {
+          this.log.error(`Failed to create Daikin device at IP: ${ip}`);
+          continue;
+        }
+
+        await device.connect();
+        await device.createEndpoint(this);
+
+        this.devices.push(device);
+
+        await device.registerWithPlatform(this);
+      } catch (error) {
+        this.log.error(`Error discovering device at IP ${daikinIP}: ${(error as Error).message}`);
+      }
+    }
   }
 }

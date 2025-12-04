@@ -396,7 +396,7 @@ export async function destroyInstance(matterbridge: Matterbridge, cleanupPause: 
  */
 export async function closeMdnsInstance(matterbridge: Matterbridge): Promise<void> {
   // @ts-expect-error - accessing private member for testing
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const mdns = matterbridge.environment.get(MdnsService) as any;
   if (mdns && mdns[Symbol.asyncDispose] && typeof mdns[Symbol.asyncDispose] === 'function') await mdns[Symbol.asyncDispose]();
   if (mdns && mdns.close && typeof mdns.close === 'function') await mdns.close();

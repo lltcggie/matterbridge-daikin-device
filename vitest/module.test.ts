@@ -5,7 +5,7 @@ import { AnsiLogger, LogLevel } from 'matterbridge/logger';
 import { MatterbridgeEndpoint, PlatformConfig, PlatformMatterbridge, SystemInformation } from 'matterbridge';
 import { VendorId } from 'matterbridge/matter';
 
-import { TemplatePlatform } from '../src/module.ts';
+import { DaikinPlatform } from '../src/module.ts';
 
 const mockLog = {
   fatal: vi.fn((message: string, ...parameters: any[]) => {}),
@@ -45,7 +45,7 @@ const mockMatterbridge: PlatformMatterbridge = {
 } as unknown as PlatformMatterbridge;
 
 const mockConfig: PlatformConfig = {
-  name: 'matterbridge-plugin-template',
+  name: 'matterbridge-daikin-device',
   type: 'DynamicPlatform',
   version: '1.0.0',
   debug: false,
@@ -54,8 +54,8 @@ const mockConfig: PlatformConfig = {
 
 const loggerLogSpy = vi.spyOn(AnsiLogger.prototype, 'log').mockImplementation((level: string, message: string, ...parameters: any[]) => {});
 
-describe('Matterbridge Plugin Template', () => {
-  let instance: TemplatePlatform;
+describe('Matterbridge Daikin Device', () => {
+  let instance: DaikinPlatform;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -67,15 +67,15 @@ describe('Matterbridge Plugin Template', () => {
 
   it('should throw an error if matterbridge is not the required version', async () => {
     mockMatterbridge.matterbridgeVersion = '2.0.0'; // Simulate an older version
-    expect(() => new TemplatePlatform(mockMatterbridge, mockLog, mockConfig)).toThrow(
+    expect(() => new DaikinPlatform(mockMatterbridge, mockLog, mockConfig)).toThrow(
       'This plugin requires Matterbridge version >= "3.3.0". Please update Matterbridge from 2.0.0 to the latest version in the frontend.',
     );
     mockMatterbridge.matterbridgeVersion = '3.3.0';
   });
 
   it('should create an instance of the platform', async () => {
-    instance = (await import('../src/module.ts')).default(mockMatterbridge, mockLog, mockConfig) as TemplatePlatform;
-    expect(instance).toBeInstanceOf(TemplatePlatform);
+    instance = (await import('../src/module.ts')).default(mockMatterbridge, mockLog, mockConfig) as DaikinPlatform;
+    expect(instance).toBeInstanceOf(DaikinPlatform);
     expect(instance.matterbridge).toBe(mockMatterbridge);
     expect(instance.log).toBe(mockLog);
     expect(instance.config).toBe(mockConfig);

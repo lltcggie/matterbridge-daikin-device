@@ -75,6 +75,7 @@ export default defineConfig([
     },
     rules: {
       // Override/add rules specific to typescript files here
+      'no-prototype-builtins': 'off', // Allow direct use of Object.prototype built-in methods
       'no-unused-vars': 'off', // Disable base rule for unused variables in test files
       '@typescript-eslint/no-unused-vars': [
         'error',
@@ -87,6 +88,10 @@ export default defineConfig([
           caughtErrorsIgnorePattern: '^_', // Ignore unused caught errors starting with _
         },
       ],
+      '@typescript-eslint/no-non-null-assertion': ['off'], // Allow non-null assertions
+      '@typescript-eslint/no-explicit-any': ['off'], // Allow explicit any type
+      '@typescript-eslint/no-extraneous-class': ['off'], // Allow classes with only static members
+      'jsdoc/require-jsdoc': 'off', // Disable JSDoc rule for source files
     },
   },
   {

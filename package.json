@@ -1,9 +1,9 @@
 {
-  "name": "matterbridge-plugin-template",
-  "version": "1.0.3",
-  "description": "Matterbridge Template Plugin",
-  "author": "https://github.com/Luligu",
-  "homepage": "https://github.com/Luligu/matterbridge-plugin-template/blob/main/README.md",
+  "name": "matterbridge-daikin-device",
+  "version": "1.0.0",
+  "description": "Matterbridge Plugin for Daikin Devices",
+  "author": "https://github.com/lltcggie",
+  "homepage": "https://github.com/lltcggie/matterbridge-daikin-device/blob/main/README.md",
   "license": "Apache-2.0",
   "type": "module",
   "main": "dist/module.js",
@@ -13,19 +13,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Luligu/matterbridge-plugin-template.git"
+    "url": "git+https://github.com/lltcggie/matterbridge-daikin-device.git"
   },
   "bugs": {
-    "url": "https://github.com/Luligu/matterbridge-plugin-template/issues"
-  },
-  "funding": {
-    "type": "buymeacoffee",
-    "url": "https://www.buymeacoffee.com/luligugithub"
+    "url": "https://github.com/lltcggie/matterbridge-daikin-device/issues"
   },
   "keywords": [
     "matterbridge",
     "plugin",
-    "template",
     "matter.js",
     "matter-node.js",
     "matter",
@@ -40,7 +35,8 @@
     "alexa",
     "homeassistant",
     "smartthings",
-    "ewelink"
+    "ewelink",
+    "daikin"
   ],
   "scripts": {
     "start": "matterbridge",
@@ -97,14 +93,18 @@
     "matterbridge:list": "matterbridge -list"
   },
   "dependencies": {
+    "async-lock": "^1.4.1",
     "node-ansi-logger": "3.1.1",
-    "node-persist-manager": "2.0.0"
+    "node-persist-manager": "2.0.0",
+    "superagent": "^10.2.3"
   },
   "devDependencies": {
     "@eslint/js": "9.39.1",
     "@jest/globals": "30.2.0",
+    "@types/async-lock": "^1.4.2",
     "@types/jest": "30.0.0",
     "@types/node": "24.10.1",
+    "@types/superagent": "^8.1.9",
     "@vitest/coverage-v8": "4.0.8",
     "@vitest/eslint-plugin": "1.4.2",
     "eslint": "9.39.1",
